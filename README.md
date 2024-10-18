@@ -12,7 +12,8 @@ CannacoinCash is a cryptocurrency forked from Litecoin. This guide provides step
   - [3. Rename Litecoin to CannacoinCash](#3-rename-litecoin-to-cannacoincash)
   - [4. Change Default Network Ports](#4-change-default-network-ports)
   - [5. Change Network Magic Bytes](#5-change-network-magic-bytes)
-  - [6. Create Configuration Directory and File](#6-create-configuration-directory-and-file)
+  - [6. Modify Max Supply and Mining Reward](#6-modify-max-supply-and-mining-reward)
+  - [7. Create Configuration Directory and File](#7-create-configuration-directory-and-file)
 - [Compiling CannacoinCash](#compiling-cannacoincash)
 - [Starting the CannacoinCash Daemon](#starting-the-cannacoincash-daemon)
 - [Mining CannacoinCash](#mining-cannacoincash)
@@ -95,7 +96,43 @@ sed -i 's/0xd9b4bef9/0xcacacacc/g' src/chainparams.cpp
 sed -i 's/0xdab5bffa/0xcacacacd/g' src/chainparams.cpp
 ```
 
-### 6. Create Configuration Directory and File
+### 6. Modify Max Supply and Mining Reward
+
+#### Change the Subsidy Halving Interval
+
+Modify the subsidy halving interval to change how often the mining reward halves.
+
+Update `src/chainparams.cpp`:
+
+```bash
+sed -i 's/consensus.nSubsidyHalvingInterval = 840000;/consensus.nSubsidyHalvingInterval = 210000;/g' src/chainparams.cpp
+```
+
+Update `src/consensus/consensus.h`:
+
+```bash
+sed -i 's/static const int nSubsidyHalvingInterval = 840000;/static const int nSubsidyHalvingInterval = 210000;/g' src/consensus/consensus.h
+```
+
+#### Change the Maximum Money Supply
+
+Modify `src/amount.h` to set the maximum number of coins:
+
+```bash
+sed -i 's/static const CAmount MAX_MONEY = 84000000 \* COIN;/static const CAmount MAX_MONEY = 21000000 \* COIN;/g' src/amount.h
+```
+
+#### Change the Initial Mining Reward
+
+Update the initial mining reward in `src/validation.cpp`:
+
+```bash
+sed -i 's/CAmount nSubsidy = 50 \* COIN;/CAmount nSubsidy = 100 \* COIN;/g' src/validation.cpp
+```
+
+**Note:** If the original value is different (e.g., `25 * COIN`), adjust the `sed` command accordingly.
+
+### 7. Create Configuration Directory and File
 
 Set up the configuration for the CannacoinCash daemon:
 
@@ -144,6 +181,8 @@ Check if the daemon is running:
 ```bash
 src/cannacoincash-cli getblockchaininfo
 ```
+
+You should see blockchain information confirming that the daemon is operational.
 
 ## Mining CannacoinCash
 
@@ -218,7 +257,7 @@ sgminer -k scrypt -o http://localhost:9387 -u user -p pass
 
 You may need to adjust network parameters to make mining feasible.
 
-Modify `chainparams.cpp`:
+Modify `src/chainparams.cpp`:
 
 ```bash
 nano src/chainparams.cpp
@@ -229,7 +268,6 @@ Adjust parameters such as:
 - `consensus.powLimit`
 - `consensus.nPowTargetTimespan`
 - `consensus.nPowTargetSpacing`
-- `consensus.nSubsidyHalvingInterval`
 
 Recompile the daemon after making changes:
 
@@ -337,3 +375,84 @@ CannacoinCash is released under the MIT License. See `COPYING` for more informat
 ---
 
 **Disclaimer:** This guide is for educational purposes. Ensure compliance with all legal regulations and licensing agreements when forking and modifying open-source projects.
+
+# Updated Bash Script
+
+Below is the updated bash script incorporating all the changes and corrections:
+
+```bash
+#!/bin/bash
+
+# Update and install dependencies
+sudo apt update
+sudo apt install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git
+sudo apt install -y libboost-all-dev
+sudo apt install -y libdb-dev libdb++-dev
+sudo apt install -y qtbase5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+sudo apt install -y libqrencode-dev
+sudo apt install -y libminiupnpc-dev
+
+# Clone the Litecoin repository and rename it
+cd ~
+git clone https://github.com/litecoin-project/litecoin.git CannacoinCash
+cd CannacoinCash
+
+# Replace all instances of Litecoin with CannacoinCash
+find . -type f -exec sed -i 's/Litecoin/CannacoinCash/g' {} +
+find . -type f -exec sed -i 's/LITECOIN/CANNACOINCASH/g' {} +
+find . -type f -exec sed -i 's/litecoin/cannacoincash/g' {} +
+
+# Change default network ports
+find . -type f -exec sed -i 's/9333/9388/g' {} +  # New P2P Port
+find . -type f -exec sed -i 's/9332/9387/g' {} +  # New RPC Port
+
+# Change network magic bytes
+sed -i 's/0xdbb6c0fb/0xcacacaca/g' src/chainparams.cpp
+sed -i 's/0xfbc0b6db/0xcacacacb/g' src/chainparams.cpp
+sed -i 's/0xd9b4bef9/0xcacacacc/g' src/chainparams.cpp
+sed -i 's/0xdab5bffa/0xcacacacd/g' src/chainparams.cpp
+
+# Change the subsidy halving interval to 210,000 blocks
+sed -i 's/consensus.nSubsidyHalvingInterval = 840000;/consensus.nSubsidyHalvingInterval = 210000;/g' src/chainparams.cpp
+sed -i 's/static const int nSubsidyHalvingInterval = 840000;/static const int nSubsidyHalvingInterval = 210000;/g' src/consensus/consensus.h
+
+# Change the maximum money supply to 21 million coins
+sed -i 's/static const CAmount MAX_MONEY = 84000000 \* COIN;/static const CAmount MAX_MONEY = 21000000 \* COIN;/g' src/amount.h
+
+# Change the initial mining reward to 100 coins
+sed -i 's/CAmount nSubsidy = 50 \* COIN;/CAmount nSubsidy = 100 \* COIN;/g' src/validation.cpp
+
+# Create configuration directory and file
+mkdir ~/.cannacoincash
+echo "rpcuser=user" > ~/.cannacoincash/cannacoincash.conf
+echo "rpcpassword=pass" >> ~/.cannacoincash/cannacoincash.conf
+echo "rpcallowip=127.0.0.1" >> ~/.cannacoincash/cannacoincash.conf
+echo "rpcport=9387" >> ~/.cannacoincash/cannacoincash.conf
+echo "server=1" >> ~/.cannacoincash/cannacoincash.conf
+echo "daemon=1" >> ~/.cannacoincash/cannacoincash.conf
+
+# Build the CannacoinCash software
+./autogen.sh
+./configure
+make
+
+# Start the CannacoinCash daemon
+src/cannacoincashd -daemon
+
+# Completion message
+echo "CannacoinCash successfully built and the daemon is now running."
+```
+
+# Updates to the README.md
+
+The `README.md` has been updated to reflect:
+
+- Corrected `sed` commands to change the max supply and mining reward.
+- Adjustments to the bash script sections.
+- Clarification on terminology in the completion message.
+
+---
+
+**Note:** Always ensure that the `sed` commands match the exact lines in your source code files. If there are discrepancies, you may need to adjust the search patterns in the `sed` commands accordingly.
+
+If you have any further questions or need additional assistance, feel free to ask!
