@@ -1,70 +1,73 @@
-# cannacoin-cash
+# CannacoinCash
 
-CannacoinCash is a cryptocurrency forked from Litecoin. This guide provides step-by-step instructions to create, build, and start mining CannacoinCash.
+CannacoinCash is a decentralized cryptocurrency based on the Litecoin codebase. It aims to provide fast, secure, and low-cost payments by leveraging the power of blockchain technology. This project is a fork of Litecoin v0.21.3, with modifications to create a new, independent blockchain network.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Prerequisites](#prerequisites)
-- [Installation and Setup](#installation-and-setup)
-  - [1. Update and Install Dependencies](#1-update-and-install-dependencies)
-  - [2. Clone the Litecoin Repository](#2-clone-the-litecoin-repository)
-  - [3. Rename Litecoin to CannacoinCash](#3-rename-litecoin-to-cannacoincash)
-  - [4. Change Default Network Ports](#4-change-default-network-ports)
-  - [5. Change Network Magic Bytes](#5-change-network-magic-bytes)
-  - [6. Modify Max Supply and Mining Reward](#6-modify-max-supply-and-mining-reward)
-  - [7. Create Configuration Directory and File](#7-create-configuration-directory-and-file)
-- [Compiling CannacoinCash](#compiling-cannacoincash)
-- [Starting the CannacoinCash Daemon](#starting-the-cannacoincash-daemon)
+- [Features](#features)
+- [Modifications](#modifications)
+- [Dependencies](#dependencies)
+- [Building CannacoinCash](#building-cannacoincash)
+- [Setting Up Configuration](#setting-up-configuration)
+- [Generating a New Genesis Block](#generating-a-new-genesis-block)
+- [Running CannacoinCash Daemon](#running-cannacoincash-daemon)
 - [Mining CannacoinCash](#mining-cannacoincash)
-  - [Option A: Using the Built-in Miner (CPU Mining)](#option-a-using-the-built-in-miner-cpu-mining)
-  - [Option B: Using cpuminer](#option-b-using-cpuminer)
-  - [Option C: Using sgminer (GPU Mining)](#option-c-using-sgminer-gpu-mining)
-- [Adjusting Network Parameters (Optional)](#adjusting-network-parameters-optional)
-- [Generating a New Genesis Block (If Necessary)](#generating-a-new-genesis-block-if-necessary)
-- [Connecting Additional Nodes](#connecting-additional-nodes)
-- [Security Considerations](#security-considerations)
-- [Troubleshooting](#troubleshooting)
-- [Mining Configuration Bash Script](#mining-configuration-bash-script)
-  - [Usage Instructions](#usage-instructions)
-  - [Modifying the Script for GPU Mining (Optional)](#modifying-the-script-for-gpu-mining-optional)
-- [Important Notes](#important-notes)
-- [Summary](#summary)
-- [Next Steps](#next-steps)
-- [Conclusion](#conclusion)
 - [License](#license)
+- [Disclaimer](#disclaimer)
 
----
+## Features
 
-## Introduction
+- **Fast Transactions**: Quick confirmation times for sending and receiving payments.
+- **Decentralized Network**: Operates on a peer-to-peer network without central authority.
+- **Modified Supply and Rewards**:
+  - Total Supply: 21 million coins.
+  - Block Reward: 100 coins per block.
+  - Halving Interval: Every 210,000 blocks.
+- **Scrypt Proof-of-Work Algorithm**: Uses Scrypt for mining, allowing for both CPU and GPU mining.
 
-CannacoinCash is a new cryptocurrency created by forking the Litecoin codebase. This guide walks you through the process of setting up CannacoinCash on your Ubuntu system, compiling the source code, configuring the node, and starting to mine CannacoinCash.
+## Modifications
 
-## Prerequisites
+CannacoinCash introduces several changes to the original Litecoin codebase:
 
-- An Ubuntu system (18.04 or later recommended)
-- Basic knowledge of command-line operations
-- Sufficient system resources for compiling and mining (CPU/GPU power, RAM)
+- **Renamed Coin**: All instances of "Litecoin" have been replaced with "CannacoinCash."
+- **Network Ports**:
+  - **P2P Port**: Changed from `9333` to `9388`.
+  - **RPC Port**: Changed from `9332` to `9387`.
+- **Network Magic Bytes**: Updated to create a separate network identity.
+- **Consensus Parameters**:
+  - **Subsidy Halving Interval**: Reduced from `840,000` to `210,000` blocks.
+  - **Maximum Money Supply**: Reduced from `84,000,000` to `21,000,000` coins.
+  - **Initial Block Reward**: Increased from `50` to `100` coins.
+  - **Difficulty Adjustment**: Modified `powLimit`, `nPowTargetTimespan`, and `nPowTargetSpacing` for initial mining ease.
+- **Genesis Block**: A new genesis block must be generated to start the CannacoinCash blockchain.
 
-## Installation and Setup
+## Dependencies
+
+Ensure your system has the following dependencies installed:
+
+- Build Tools: `build-essential`, `libtool`, `autotools-dev`, `automake`, `pkg-config`, `bsdmainutils`, `curl`, `git`
+- Libraries: `libssl-dev`, `libevent-dev`, `libboost-all-dev`, `libzmq3-dev`, `libprotobuf-dev`, `libqrencode-dev`, `libminiupnpc-dev`, `libdb-dev`, `libdb++-dev`
+- Qt (Optional for GUI): `qtbase5-dev`, `qttools5-dev-tools`
+- Protocol Buffers Compiler: `protobuf-compiler`
+
+## Building CannacoinCash
+
+Follow these steps to build CannacoinCash from source:
 
 ### 1. Update and Install Dependencies
 
-Open a terminal and run the following commands to update your system and install the necessary dependencies:
-
 ```bash
 sudo apt update
-sudo apt install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils git
-sudo apt install -y libboost-all-dev
-sudo apt install -y libdb-dev libdb++-dev
-sudo apt install -y qtbase5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
-sudo apt install -y libqrencode-dev
-sudo apt install -y libminiupnpc-dev
+sudo apt install -y \
+    build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git \
+    libssl-dev libevent-dev libboost-all-dev libzmq3-dev \
+    libprotobuf-dev protobuf-compiler \
+    libqrencode-dev libminiupnpc-dev \
+    libdb-dev libdb++-dev \
+    qtbase5-dev qttools5-dev-tools
 ```
 
-### 2. Clone the Litecoin Repository
-
-Clone the Litecoin repository from GitHub and rename it to `CannacoinCash`:
+### 2. Clone the Repository
 
 ```bash
 cd ~
@@ -72,591 +75,215 @@ git clone https://github.com/litecoin-project/litecoin.git CannacoinCash
 cd CannacoinCash
 ```
 
-### 3. Rename Litecoin to CannacoinCash
+### 3. Modify the Codebase
 
-Replace all instances of "Litecoin" with "CannacoinCash" throughout the codebase:
-
-```bash
-find . -type f -exec sed -i 's/Litecoin/CannacoinCash/g' {} +
-find . -type f -exec sed -i 's/LITECOIN/CANNACOINCASH/g' {} +
-find . -type f -exec sed -i 's/litecoin/cannacoincash/g' {} +
-```
-
-### 4. Change Default Network Ports
-
-Modify the default P2P and RPC ports to prevent conflicts with Litecoin:
+#### Rename Instances of Litecoin
 
 ```bash
-find . -type f -exec sed -i 's/9333/9388/g' {} +  # New P2P Port
-find . -type f -exec sed -i 's/9332/9387/g' {} +  # New RPC Port
+find . -type f \( -name "*.*" ! -name "*.png" ! -name "*.ico" ! -name "*.qrc" \) -exec sed -i 's/Litecoin/CannacoinCash/g' {} +
+find . -type f \( -name "*.*" ! -name "*.png" ! -name "*.ico" ! -name "*.qrc" \) -exec sed -i 's/LITECOIN/CANNACOINCASH/g' {} +
+find . -type f \( -name "*.*" ! -name "*.png" ! -name "*.ico" ! -name "*.qrc" \) -exec sed -i 's/litecoin/cannacoincash/g' {} +
 ```
 
-### 5. Change Network Magic Bytes
-
-Update the network magic bytes to establish a distinct network:
+#### Update Network Ports
 
 ```bash
-sed -i 's/0xdbb6c0fb/0xcacacaca/g' src/chainparams.cpp
-sed -i 's/0xfbc0b6db/0xcacacacb/g' src/chainparams.cpp
-sed -i 's/0xd9b4bef9/0xcacacacc/g' src/chainparams.cpp
-sed -i 's/0xdab5bffa/0xcacacacd/g' src/chainparams.cpp
+find . -type f -exec sed -i 's/9333/9388/g' {} +  # P2P Port
+find . -type f -exec sed -i 's/9332/9387/g' {} +  # RPC Port
 ```
 
-### 6. Modify Max Supply and Mining Reward
+#### Change Network Magic Bytes
 
-#### Change the Subsidy Halving Interval
-
-Modify the subsidy halving interval to change how often the mining reward halves.
-
-Update `src/chainparams.cpp`:
+In `src/chainparams.cpp`, modify the `pchMessageStart` array:
 
 ```bash
-sed -i 's/consensus.nSubsidyHalvingInterval = 840000;/consensus.nSubsidyHalvingInterval = 210000;/g' src/chainparams.cpp
+sed -i 's/pchMessageStart\[0\] = 0xfb;/pchMessageStart[0] = 0xca;/g' src/chainparams.cpp
+sed -i 's/pchMessageStart\[1\] = 0xc0;/pchMessageStart[1] = 0xca;/g' src/chainparams.cpp
+sed -i 's/pchMessageStart\[2\] = 0xb6;/pchMessageStart[2] = 0xca;/g' src/chainparams.cpp
+sed -i 's/pchMessageStart\[3\] = 0xdb;/pchMessageStart[3] = 0xca;/g' src/chainparams.cpp
 ```
 
-Update `src/consensus/consensus.h`:
+#### Update Consensus Parameters
+
+- **Subsidy Halving Interval**:
+
+  ```bash
+  sed -i 's/consensus.nSubsidyHalvingInterval = 840000;/consensus.nSubsidyHalvingInterval = 210000;/g' src/chainparams.cpp
+  ```
+
+- **Maximum Money Supply**:
+
+  ```bash
+  sed -i 's/84000000/21000000/g' src/amount.h
+  ```
+
+- **Initial Mining Reward**:
+
+  ```bash
+  sed -i 's/50 \* COIN;/100 \* COIN;/g' src/validation.cpp
+  ```
+
+#### Adjust Difficulty Parameters
 
 ```bash
-sed -i 's/static const int nSubsidyHalvingInterval = 840000;/static const int nSubsidyHalvingInterval = 210000;/g' src/consensus/consensus.h
+sed -i 's/consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");/consensus.powLimit = uint256S("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");/g' src/chainparams.cpp
+sed -i 's/consensus.nPowTargetTimespan = 3.5 \* 24 \* 60 \* 60;/consensus.nPowTargetTimespan = 24 * 60 * 60;/g' src/chainparams.cpp
+sed -i 's/consensus.nPowTargetSpacing = 2.5 \* 60;/consensus.nPowTargetSpacing = 1 \* 60;/g' src/chainparams.cpp
 ```
 
-#### Change the Maximum Money Supply
-
-Modify `src/amount.h` to set the maximum number of coins:
+#### Remove Checkpoints and DNS Seeds
 
 ```bash
-sed -i 's/static const CAmount MAX_MONEY = 84000000 \* COIN;/static const CAmount MAX_MONEY = 21000000 \* COIN;/g' src/amount.h
+# Remove existing checkpoints
+sed -i '/checkpointData =/,+6d' src/chainparams.cpp
+
+# Remove DNS seeds
+sed -i '/vSeeds.emplace_back/d' src/chainparams.cpp
 ```
 
-#### Change the Initial Mining Reward
-
-Update the initial mining reward in `src/validation.cpp`:
+### 4. Build the Software
 
 ```bash
-sed -i 's/CAmount nSubsidy = 50 \* COIN;/CAmount nSubsidy = 100 \* COIN;/g' src/validation.cpp
+./autogen.sh
+./configure --disable-tests --disable-bench
+make -j$(nproc)
 ```
 
-**Note:** If the original value is different (e.g., `25 * COIN`), adjust the `sed` command accordingly.
+## Setting Up Configuration
 
-### 7. Create Configuration Directory and File
-
-Set up the configuration for the CannacoinCash daemon:
+Create the configuration directory and file:
 
 ```bash
-mkdir ~/.cannacoincash
-nano ~/.cannacoincash/cannacoincash.conf
-```
-
-Add the following lines to `cannacoincash.conf`:
-
-```
+mkdir -p ~/.cannacoincash
+cat >~/.cannacoincash/cannacoincash.conf <<EOL
 rpcuser=user
 rpcpassword=pass
 rpcallowip=127.0.0.1
 rpcport=9387
+port=9388
+listen=1
 server=1
 daemon=1
+txindex=1
+EOL
 ```
 
-**Note:** Replace `user` and `pass` with secure credentials.
+**Note**: Replace `user` and `pass` with strong, unique credentials.
 
-## Compiling CannacoinCash
+## Generating a New Genesis Block
 
-Compile the CannacoinCash software from the modified source code:
+Generating a new genesis block is a crucial step to start the CannacoinCash blockchain. This process requires manual intervention.
 
-```bash
-./autogen.sh
-./configure
-make
-```
+### Steps:
 
-- **`./autogen.sh`**: Prepares the build system.
-- **`./configure`**: Configures the build options.
-- **`make`**: Compiles the software.
+1. **Modify `chainparams.cpp`**:
 
-## Starting the CannacoinCash Daemon
+   - Set `genesis.nTime` to the current Unix timestamp.
+   - Set `genesis.nNonce` to `0` (will be updated during generation).
+   - Adjust `genesis.nBits` for desired difficulty.
+   - Optionally, set a unique `pszTimestamp`.
 
-Start the CannacoinCash daemon in the background:
+2. **Create a Genesis Block Generator Script**:
+
+   - Write a script (e.g., in Python or C++) to calculate a valid genesis block hash.
+   - Increment `nNonce` until the hash meets the difficulty target.
+
+3. **Update Genesis Block Parameters**:
+
+   - Replace `consensus.hashGenesisBlock` and `genesis.hashMerkleRoot` in `chainparams.cpp` with the new values.
+   - Update `genesis.nNonce` and `genesis.nTime` accordingly.
+
+4. **Rebuild the Software**:
+
+   ```bash
+   make clean
+   ./autogen.sh
+   ./configure --disable-tests --disable-bench
+   make -j$(nproc)
+   ```
+
+5. **Verify Genesis Block**:
+
+   - Start the daemon:
+
+     ```bash
+     src/cannacoincashd -daemon
+     ```
+
+   - Check the genesis block hash:
+
+     ```bash
+     src/cannacoincash-cli getblockhash 0
+     ```
+
+   - Ensure it matches `consensus.hashGenesisBlock`.
+
+**Note**: Detailed instructions and scripts for generating a genesis block can be found in various online resources or cryptocurrency development guides.
+
+## Running CannacoinCash Daemon
+
+Start the CannacoinCash daemon:
 
 ```bash
 src/cannacoincashd -daemon
 ```
 
-Check if the daemon is running:
+Check the blockchain and network status:
 
 ```bash
 src/cannacoincash-cli getblockchaininfo
+src/cannacoincash-cli getnetworkinfo
 ```
-
-You should see blockchain information confirming that the daemon is operational.
 
 ## Mining CannacoinCash
 
-You can begin mining CannacoinCash using one of the following methods:
+Since internal mining commands are not available, use external mining software compatible with the Scrypt algorithm.
 
-### Option A: Using the Built-in Miner (CPU Mining)
-
-**Note:** The built-in miner may be disabled. If so, proceed to Option B.
-
-Start mining:
+### Install CPU Miner (cpuminer)
 
 ```bash
-src/cannacoincash-cli generate <number_of_blocks>
-```
-
-- Replace `<number_of_blocks>` with the number of blocks you want to mine.
-
-Check mining progress:
-
-```bash
-src/cannacoincash-cli getmininginfo
-```
-
-### Option B: Using cpuminer
-
-#### Install cpuminer
-
-```bash
-sudo apt-get install -y git build-essential automake libcurl4-openssl-dev
+sudo apt-get install -y git build-essential automake libcurl4-openssl-dev libjansson-dev
 git clone https://github.com/pooler/cpuminer.git
 cd cpuminer
 ./autogen.sh
-CFLAGS="-O3" ./configure
+./configure CFLAGS="-O3"
 make
 sudo make install
 ```
 
-#### Start Mining with cpuminer
+### Start Mining
 
 ```bash
-minerd --url=http://localhost:9387 --user=user --pass=pass --threads=4
+minerd --url=http://127.0.0.1:9387 --user=user --pass=pass --threads=4
 ```
 
-- Ensure `rpcuser` and `rpcpassword` match those in `cannacoincash.conf`.
-- Adjust `--threads` according to your CPU cores.
+- Adjust `--threads` based on your CPU capabilities.
+- Ensure `rpcuser` and `rpcpassword` match those in your `cannacoincash.conf`.
 
-### Option C: Using sgminer (GPU Mining)
+### Monitor Mining Progress
 
-#### Install sgminer (For AMD GPUs)
-
-```bash
-sudo apt-get install -y git build-essential autoconf libtool libcurl4-openssl-dev libncurses5-dev pkg-config
-git clone https://github.com/sgminer-dev/sgminer.git
-cd sgminer
-./autogen.sh
-./configure --enable-scrypt
-make
-sudo make install
-```
-
-#### Start Mining with sgminer
-
-```bash
-sgminer -k scrypt -o http://localhost:9387 -u user -p pass
-```
-
-- Replace `user` and `pass` with your RPC credentials.
-
-**For NVIDIA GPUs**, consider using `ccminer`.
-
-## Adjusting Network Parameters (Optional)
-
-You may need to adjust network parameters to make mining feasible.
-
-Modify `src/chainparams.cpp`:
-
-```bash
-nano src/chainparams.cpp
-```
-
-Adjust parameters such as:
-
-- `consensus.powLimit`
-- `consensus.nPowTargetTimespan`
-- `consensus.nPowTargetSpacing`
-
-Recompile the daemon after making changes:
-
-```bash
-make clean
-./autogen.sh
-./configure
-make
-```
-
-## Generating a New Genesis Block (If Necessary)
-
-If your node fails to start due to genesis block issues, generate a new one.
-
-### Steps to Generate a New Genesis Block
-
-1. **Modify `chainparams.cpp`:**
-
-   - Set `genesis.nTime` and `genesis.nNonce` to new values.
-   - Adjust `genesis.nBits` for desired difficulty.
-
-2. **Generate Genesis Block:**
-
-   - Use a Genesis Block Generator script or write a simple program.
-   - Calculate `hashGenesisBlock` and `genesisMerkleRoot`.
-
-3. **Update Genesis Parameters:**
-
-   - Replace existing parameters in `chainparams.cpp` with new values.
-
-4. **Recompile the Daemon:**
-
-   ```bash
-   make clean
-   ./autogen.sh
-   ./configure
-   make
-   ```
-
-5. **Start the Daemon:**
-
-   ```bash
-   src/cannacoincashd -daemon
-   ```
-
-## Connecting Additional Nodes
-
-To create a robust network, run multiple nodes.
-
-- Set up additional nodes on other machines.
-- Use the `addnode` parameter in `cannacoincash.conf`:
-
-  ```
-  addnode=your.main.node.ip
-  ```
-
-- Restart the daemon:
+- **Mining Info**:
 
   ```bash
-  src/cannacoincash-cli stop
-  src/cannacoincashd -daemon
+  src/cannacoincash-cli getmininginfo
   ```
 
-## Security Considerations
-
-- **Secure RPC Credentials:**
-
-  - Use strong, unique `rpcuser` and `rpcpassword`.
-
-- **Firewall Settings:**
-
-  - Configure firewall to allow only necessary connections.
-  - Close unnecessary ports.
-
-- **Regular Backups:**
-
-  - Backup `wallet.dat` regularly.
-  - Store backups securely.
-
-## Troubleshooting
-
-- **Daemon Fails to Start:**
-
-  - Check `~/.cannacoincash/debug.log` for errors.
-  - Ensure all dependencies are installed.
-
-- **Mining Software Can't Connect:**
-
-  - Verify the daemon is running on port `9387`.
-  - Ensure `rpcallowip` in `cannacoincash.conf` allows connections.
-
-- **Low Hash Rate:**
-
-  - Optimize mining software settings.
-  - Update hardware drivers.
-
----
-
-## Mining Configuration Bash Script
-
-Below is the bash script that automates the setup and initiation of mining operations for CannacoinCash:
-
-```bash
-#!/bin/bash
-
-# Install dependencies for mining software
-sudo apt-get update
-sudo apt-get install -y git build-essential automake libcurl4-openssl-dev
-
-# Clone and build cpuminer (CPU mining software)
-cd ~
-git clone https://github.com/pooler/cpuminer.git
-cd cpuminer
-./autogen.sh
-CFLAGS="-O3" ./configure
-make
-sudo make install
-
-# Navigate back to the home directory
-cd ~
-
-# Ensure the CannacoinCash daemon is running
-if pgrep -x "cannacoincashd" > /dev/null
-then
-    echo "CannacoinCash daemon is running."
-else
-    echo "Starting CannacoinCash daemon..."
-    ~/CannacoinCash/src/cannacoincashd -daemon
-    sleep 10  # Wait for the daemon to start
-fi
-
-# Create or update the cannacoincash.conf file with RPC credentials
-mkdir -p ~/.cannacoincash
-echo "rpcuser=user" > ~/.cannacoincash/cannacoincash.conf
-echo "rpcpassword=pass" >> ~/.cannacoincash/cannacoincash.conf
-echo "rpcallowip=127.0.0.1" >> ~/.cannacoincash/cannacoincash.conf
-echo "rpcport=9387" >> ~/.cannacoincash/cannacoincash.conf
-echo "server=1" >> ~/.cannacoincash/cannacoincash.conf
-echo "daemon=1" >> ~/.cannacoincash/cannacoincash.conf
-
-# Restart the CannacoinCash daemon to apply new configurations
-~/CannacoinCash/src/cannacoincash-cli stop
-~/CannacoinCash/src/cannacoincashd -daemon
-sleep 10  # Wait for the daemon to restart
-
-# Start mining with cpuminer
-echo "Starting mining operation..."
-minerd --url=http://localhost:9387 --user=user --pass=pass --threads=$(nproc)
-
-echo "Mining started. Press Ctrl+C to stop."
-
-# Keep the script running to maintain the mining process
-while true; do
-    sleep 60
-done
-```
-
----
-
-### Explanation of the Script
-
-1. **Install Mining Software Dependencies**
-
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y git build-essential automake libcurl4-openssl-dev
-   ```
-
-   - Updates the package list and installs essential tools required to build the mining software (`cpuminer`).
-
-2. **Clone and Build cpuminer**
-
-   ```bash
-   cd ~
-   git clone https://github.com/pooler/cpuminer.git
-   cd cpuminer
-   ./autogen.sh
-   CFLAGS="-O3" ./configure
-   make
-   sudo make install
-   ```
-
-   - Downloads the `cpuminer` source code and compiles it for optimal performance.
-
-3. **Ensure CannacoinCash Daemon Is Running**
-
-   ```bash
-   if pgrep -x "cannacoincashd" > /dev/null
-   then
-       echo "CannacoinCash daemon is running."
-   else
-       echo "Starting CannacoinCash daemon..."
-       ~/CannacoinCash/src/cannacoincashd -daemon
-       sleep 10  # Wait for the daemon to start
-   fi
-   ```
-
-   - Checks if the CannacoinCash daemon (`cannacoincashd`) is running. If not, it starts the daemon.
-
-4. **Configure RPC Credentials**
-
-   ```bash
-   mkdir -p ~/.cannacoincash
-   echo "rpcuser=user" > ~/.cannacoincash/cannacoincash.conf
-   echo "rpcpassword=pass" >> ~/.cannacoincash/cannacoincash.conf
-   echo "rpcallowip=127.0.0.1" >> ~/.cannacoincash/cannacoincash.conf
-   echo "rpcport=9387" >> ~/.cannacoincash/cannacoincash.conf
-   echo "server=1" >> ~/.cannacoincash/cannacoincash.conf
-   echo "daemon=1" >> ~/.cannacoincash/cannacoincash.conf
-   ```
-
-   - Sets up the CannacoinCash configuration file with RPC credentials required for mining software to communicate with the daemon.
-   - **Note:** Replace `"user"` and `"pass"` with secure credentials.
-
-5. **Restart the CannacoinCash Daemon**
-
-   ```bash
-   ~/CannacoinCash/src/cannacoincash-cli stop
-   ~/CannacoinCash/src/cannacoincashd -daemon
-   sleep 10  # Wait for the daemon to restart
-   ```
-
-   - Restarts the daemon to apply any new configurations.
-
-6. **Start Mining with cpuminer**
-
-   ```bash
-   echo "Starting mining operation..."
-   minerd --url=http://localhost:9387 --user=user --pass=pass --threads=$(nproc)
-
-   echo "Mining started. Press Ctrl+C to stop."
-   ```
-
-   - Initiates the mining process using `cpuminer`.
-   - **Parameters:**
-     - `--url=http://localhost:9387`: Connects to the local CannacoinCash daemon's RPC interface.
-     - `--user=user --pass=pass`: Uses the RPC credentials set in the `cannacoincash.conf` file.
-     - `--threads=$(nproc)`: Utilizes all available CPU cores for mining.
-   - **Note:** Ensure that the RPC credentials match those in your `cannacoincash.conf` file.
-
-7. **Keep the Script Running**
-
-   ```bash
-   while true; do
-       sleep 60
-   done
-   ```
-
-   - Keeps the script running indefinitely to maintain the mining operation.
-   - **Note:** The `minerd` process will continue running even if the script is stopped. Press `Ctrl+C` to stop the mining process.
-
----
-
-### Usage Instructions
-
-1. **Save the Script**
-
-   Save the script to a file, for example, `start_mining.sh`.
-
-2. **Make the Script Executable**
-
-   ```bash
-   chmod +x start_mining.sh
-   ```
-
-3. **Run the Script**
-
-   ```bash
-   ./start_mining.sh
-   ```
-
-4. **Monitor Mining Progress**
-
-   - The script will output messages from `minerd` showing the mining progress.
-   - You can check your CannacoinCash wallet balance:
-
-     ```bash
-     ~/CannacoinCash/src/cannacoincash-cli getbalance
-     ```
-
-5. **Stop Mining**
-
-   - Press `Ctrl+C` to stop the mining process.
-
----
-
-### Modifying the Script for GPU Mining (Optional)
-
-#### For AMD GPUs using sgminer
-
-**Install sgminer**
-
-```bash
-sudo apt-get install -y git build-essential autoconf libtool libcurl4-openssl-dev libncurses5-dev pkg-config
-git clone https://github.com/sgminer-dev/sgminer.git
-cd sgminer
-./autogen.sh
-./configure --enable-scrypt
-make
-sudo make install
-```
-
-**Update the Script**
-
-Modify the mining section of the script:
-
-```bash
-# Start mining with sgminer
-echo "Starting mining operation with sgminer..."
-sgminer -k scrypt -o http://localhost:9387 -u user -p pass
-
-echo "Mining started. Press Ctrl+C to stop."
-```
-
-#### For NVIDIA GPUs using ccminer
-
-**Install ccminer**
-
-```bash
-sudo apt-get install -y git build-essential automake autoconf libtool libcurl4-openssl-dev
-git clone https://github.com/tpruvot/ccminer.git
-cd ccminer
-./build.sh
-sudo make install
-```
-
-**Update the Script**
-
-Modify the mining section of the script:
-
-```bash
-# Start mining with ccminer
-echo "Starting mining operation with ccminer..."
-ccminer -a scrypt -o http://localhost:9387 -u user -p pass
-
-echo "Mining started. Press Ctrl+C to stop."
-```
-
----
-
-## Important Notes
-
-- **Algorithm Compatibility**: Ensure that your mining software supports the algorithm used by CannacoinCash (likely Scrypt, inherited from Litecoin).
-
-- **Daemon Synchronization**: Before starting mining, ensure that your CannacoinCash daemon is fully synchronized with the network (though as a new cryptocurrency, your node may be the only one).
-
-- **Network Peers**: To establish a network and make mining meaningful, you should have multiple nodes running CannacoinCash.
-
-- **Legal and Ethical Considerations**: Be aware of the legal implications of mining and operating a cryptocurrency in your jurisdiction.
-
----
-
-## Summary
-
-The provided guide and scripts help you:
-
-- Fork the Litecoin codebase to create CannacoinCash.
-- Modify key parameters like max supply and mining reward.
-- Compile and run the CannacoinCash daemon.
-- Set up and start mining operations using CPU or GPU.
-
-By following these instructions, you can quickly set up and start mining CannacoinCash. Adjustments can be made to customize the cryptocurrency further or scale your mining operations.
-
----
-
-## Next Steps
-
-- **Monitor Performance**: Keep an eye on system performance and adjust mining settings as needed.
-
-- **Scale Your Mining Operation**: Consider setting up additional mining rigs or nodes to expand the network and mining capacity.
-
-- **Community Engagement**: If you plan to develop CannacoinCash further, consider building a community to support the network.
-
----
-
-## Conclusion
-
-By following this guide, you've successfully created CannacoinCash by forking Litecoin, compiled the software, configured your node, and started mining. Remember to maintain your network, secure your setup, and consider the legal and ethical implications of launching a new cryptocurrency.
+- **Wallet Balance**:
+
+  ```bash
+  src/cannacoincash-cli getbalance
+  ```
 
 ## License
 
-CannacoinCash is released under the MIT License. See `COPYING` for more information.
+CannacoinCash is released under the terms of the MIT license. See [COPYING](COPYING) for more information or see [https://opensource.org/licenses/MIT](https://opensource.org/licenses/MIT).
+
+## Disclaimer
+
+- **Legal Considerations**: Ensure that creating and using CannacoinCash complies with all applicable laws and regulations in your jurisdiction.
+- **Security**: Use strong credentials for your RPC user and password. Secure your wallet by encrypting it and keeping backups.
+- **No Warranty**: This software is provided "as is" without warranty of any kind. Use at your own risk.
 
 ---
 
-**Disclaimer:** This guide is for educational purposes. Ensure compliance with all legal regulations and licensing agreements when forking and modifying open-source projects.
+**Note**: This README reflects the current progress of the CannacoinCash project as of the latest updates. Further modifications and enhancements may be necessary for a fully functional and secure cryptocurrency network.
