@@ -1,12 +1,19 @@
 #!/bin/bash
 
-# Install dependencies for mining software
+# CannacoinCash Mining Setup Script
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Update and install dependencies for mining software
 sudo apt-get update
-sudo apt-get install -y git build-essential automake libcurl4-openssl-dev
+sudo apt-get install -y git build-essential automake libcurl4-openssl-dev libjansson-dev
 
 # Clone and build cpuminer (CPU mining software)
 cd ~
-git clone https://github.com/pooler/cpuminer.git
+if [ ! -d "cpuminer" ]; then
+    git clone https://github.com/pooler/cpuminer.git
+fi
 cd cpuminer
 ./autogen.sh
 CFLAGS="-O3" ./configure
@@ -16,37 +23,58 @@ sudo make install
 # Navigate back to the home directory
 cd ~
 
-# Ensure the CannacoinCash daemon is running
-if pgrep -x "cannacoincashd" > /dev/null
-then
-    echo "CannacoinCash daemon is running."
-else
-    echo "Starting CannacoinCash daemon..."
-    ~/CannacoinCash/src/cannacoincashd -daemon
-    sleep 10  # Wait for the daemon to start
-fi
+# Set secure RPC credentials
+RPCUSER="your_rpc_username"
+RPCPASSWORD="your_rpc_password"
 
 # Create or update the cannacoincash.conf file with RPC credentials
 mkdir -p ~/.cannacoincash
-echo "rpcuser=user" > ~/.cannacoincash/cannacoincash.conf
-echo "rpcpassword=pass" >> ~/.cannacoincash/cannacoincash.conf
-echo "rpcallowip=127.0.0.1" >> ~/.cannacoincash/cannacoincash.conf
-echo "rpcport=9387" >> ~/.cannacoincash/cannacoincash.conf
-echo "server=1" >> ~/.cannacoincash/cannacoincash.conf
-echo "daemon=1" >> ~/.cannacoincash/cannacoincash.conf
+cat > ~/.cannacoincash/cannacoincash.conf <<EOL
+rpcuser=${RPCUSER}
+rpcpassword=${RPCPASSWORD}
+rpcallowip=127.0.0.1
+rpcport=9387
+port=9388
+listen=1
+server=1
+daemon=1
+txindex=1
+EOL
+
+# Ensure the CannacoinCash daemon is running
+if pgrep -x "cannacoincashd" > /dev/null
+then
+    echo "CannacoinCash daemon is already running."
+else
+    echo "Starting CannacoinCash daemon..."
+    # Adjust the path to cannacoincashd if necessary
+    if [ -f ~/CannacoinCash/src/cannacoincashd ]; then
+        ~/CannacoinCash/src/cannacoincashd -daemon
+    elif command -v cannacoincashd >/dev/null 2>&1; then
+        cannacoincashd -daemon
+    else
+        echo "CannacoinCash daemon not found. Please ensure it is built and installed."
+        exit 1
+    fi
+    sleep 10  # Wait for the daemon to start
+fi
 
 # Restart the CannacoinCash daemon to apply new configurations
-~/CannacoinCash/src/cannacoincash-cli stop
-~/CannacoinCash/src/cannacoincashd -daemon
+if command -v cannacoincash-cli >/dev/null 2>&1; then
+    cannacoincash-cli stop
+    sleep 5
+    cannacoincashd -daemon
+else
+    # Adjust the path to cannacoincash-cli and cannacoincashd if necessary
+    ~/CannacoinCash/src/cannacoincash-cli stop
+    sleep 5
+    ~/CannacoinCash/src/cannacoincashd -daemon
+fi
 sleep 10  # Wait for the daemon to restart
 
 # Start mining with cpuminer
 echo "Starting mining operation..."
-minerd --url=http://localhost:9387 --user=user --pass=pass --threads=$(nproc)
+
+minerd --url=http://127.0.0.1:9387 --user=${RPCUSER} --pass=${RPCPASSWORD} --threads=$(nproc)
 
 echo "Mining started. Press Ctrl+C to stop."
-
-# Keep the script running to maintain the mining process
-while true; do
-    sleep 60
-done
